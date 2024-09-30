@@ -1,15 +1,19 @@
 CC = g++
 FLAGS = -Wextra -Wall -Werror
 NAME = read-file
+SRC = main.cpp
+OBJ = main.o
 
-all: make
+all: $(NAME)
 
-make: main.o
-	@ $(CC) $(FLAGS) main.o -o $(NAME)
-	@ rm -f main.o
+$(NAME): $(OBJ)
+	@ $(CC) $(FLAGS) $(OBJ) -o $(NAME)
 
-main.o: main.cpp
-	@ $(CC) $(FLAGS) -c main.cpp
+$(OBJ): $(SRC)
+	@ $(CC) $(FLAGS) -c $(SRC) -o $(OBJ)
 
 clean:
-	@ rm -rf $(NAME)
+	@ rm -rf $(NAME) $(OBJ)
+
+fclean:
+	@ rm -f $(OBJ)
