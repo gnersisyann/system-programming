@@ -1,18 +1,29 @@
+#include <pthread.h>
+
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <numeric>
-#include <thread>
 #include <vector>
 
-void calculate_partial_sum(const std::vector<int>& arr, std::size_t start, std::size_t end, long long& partial_sum)
+struct ThreadData
 {
-    partial_sum = std::accumulate(arr.begin() + start, arr.begin() + end, 0LL);
+    const std::vector<int>* arr;
+    std::size_t start;
+    std::size_t end;
+    long long partial_sum;
+};
+
+void* calculate_partial_sum(void* arg)
+{
+    ThreadData* data = static_cast<ThreadData*>(arg);
+    data->partial_sum = std::accumulate(data->arr->begin() + data->start, data->arr->begin() + data->end, 0LL);
+    return nullptr;
 }
 
 int main(int argc, char* argv[])
 {
-    if (argc < 3)
+    if (argc != 3)
     {
         std::cerr << "Usage: " << argv[0] << " <array_size> <thread_count>" << std::endl;
         return 1;
@@ -31,30 +42,33 @@ int main(int argc, char* argv[])
     long long single_thread_sum = std::accumulate(arr.begin(), arr.end(), 0LL);
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> single_thread_duration = end_time - start_time;
-    std::cout << "Time spent without threads: " << single_thread_duration.count() << std::endl;
+    std::cout << "Time spent without threads: " << single_thread_duration.count() << " seconds" << std::endl;
 
     start_time = std::chrono::high_resolution_clock::now();
-    std::vector<std::thread> threads;
-    std::vector<long long> partial_sums(M, 0);
+    std::vector<pthread_t> threads(M);
+    std::vector<ThreadData> thread_data(M);
     std::size_t chunk_size = N / M;
 
     for (int i = 0; i < M; ++i)
     {
-        std::size_t start = i * chunk_size;
-        std::size_t end = (i == M - 1) ? N : start + chunk_size;
-        threads.emplace_back(calculate_partial_sum, std::cref(arr), start, end, std::ref(partial_sums[i]));
+        thread_data[i] = {&arr, i * chunk_size, (i == M - 1) ? N : (i + 1) * chunk_size, 0};
+        pthread_create(&threads[i], nullptr, calculate_partial_sum, &thread_data[i]);
     }
 
-    for (auto& t : threads)
+    for (int i = 0; i < M; ++i)
     {
-        t.join();
+        pthread_join(threads[i], nullptr);
     }
 
-    long long multi_thread_sum = std::accumulate(partial_sums.begin(), partial_sums.end(), 0LL);
+    long long multi_thread_sum = 0;
+    for (const auto& data : thread_data)
+    {
+        multi_thread_sum += data.partial_sum;
+    }
+
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> multi_thread_duration = end_time - start_time;
-
-    std::cout << "Time spent with " << M << " threads: " << multi_thread_duration.count() << std::endl;
+    std::cout << "Time spent with " << M << " threads: " << multi_thread_duration.count() << " seconds" << std::endl;
 
     return 0;
 }
