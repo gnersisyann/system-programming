@@ -1,0 +1,24 @@
+Duration with using mutex is 0.00835612 <---- mutex is faster
+Duration with using spinlock is 0.01010845
+Duration with using semaphore is 0.00830677
+
+Duration with using mutex is 0.00828338 <---- mutex is faster
+Duration with using spinlock is 0.01092485
+Duration with using semaphore is 0.01370471
+
+Duration with using mutex is 0.01164476 <---- mutex is faster
+Duration with using spinlock is 0.01210127
+Duration with using semaphore is 0.00989549
+
+Duration with using mutex is 0.01054652 <---- mutex is faster
+Duration with using spinlock is 0.01060161
+Duration with using semaphore is 0.01160332
+
+Duration with using mutex is 0.01411323
+Duration with using spinlock is 0.00938641 <---- spinlock is faster
+Duration with using semaphore is 0.00847893
+
+Duration with using mutex is 0.00954075
+Duration with using spinlock is 0.00864458 <---- spinlock is faster
+Duration with using semaphore is 0.01351320
+
