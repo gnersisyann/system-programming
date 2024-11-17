@@ -304,7 +304,7 @@ Time spent with M threads: Y
 
 ### Requirements
 
-Write the code of this program, synchronize it using the three synchronization primitives taught in the lesson (`mutex`, `spinlock`, `semaphore`).
+Write the code of this program, synchronize it using the three synchronization primitives (`mutex`, `spinlock`, `semaphore`).
 
 Calculate the time for which the program will be executed with the help of each of the above synchronizations.
 
