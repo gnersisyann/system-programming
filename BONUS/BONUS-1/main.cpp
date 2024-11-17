@@ -36,6 +36,7 @@ void print_file_content(const char *file_path)
         close(fd);
         exit(errno);
     }
+    close(fd);
     write(1, "\n", 1);
 }
 
