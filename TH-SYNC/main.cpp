@@ -131,7 +131,7 @@ int main()
     pthread_spin_destroy(&spinlock);
 
     delete num;
-    sem_init(&semaphore, 0, 1);
+    sem_init(&semaphore, 0, 0);
     num = new Integer(0);
 
     start_time = std::chrono::high_resolution_clock::now();
