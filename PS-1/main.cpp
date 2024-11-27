@@ -1,6 +1,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <iostream>
 
 void do_command(char **argv)
@@ -19,7 +20,24 @@ void do_command(char **argv)
     }
     else
     {
-        wait(NULL);
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        int status;
+        waitpid(pid, &status, 0);
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end_time - start_time;
+
+        if (WIFEXITED(status))
+        {
+            std::cout << "Exit status: " << WEXITSTATUS(status) << std::endl;
+        }
+        else if (WIFSIGNALED(status))
+        {
+            std::cout << "Command terminated by signal: " << WTERMSIG(status) << std::endl;
+        }
+
+        std::cout << "Duration: " << duration.count() << " seconds" << std::endl;
     }
 }
 
