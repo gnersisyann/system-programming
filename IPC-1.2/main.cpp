@@ -34,14 +34,15 @@ int main()
             perror("Child process can`t send signal\n");
         }
 
+        printf("[AFTER KILLING]: Child PID = %d, parent PID = %d\n", getpid(), getppid());
+
         sleep(2);
-        printf("Child process is ending.\n");
+        exit(0);
     }
     else
     {
         printf("Parent PID = %d, child PID = %d\n", getpid(), pid);
 
-        sleep(5);
         printf("Parent process is ended\n");
     }
 
