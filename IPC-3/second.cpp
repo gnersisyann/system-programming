@@ -4,12 +4,12 @@
 
 int main()
 {
-    shared_array array("/test", 10);
+    shared_array array("/test", 5);
 
     while (true)
     {
         array.lock();
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 5; ++i)
         {
             std::cout << "Second Process: Reading " << array[i] << " from index " << i << std::endl;
         }

@@ -18,7 +18,7 @@ class shared_array
     int* array;
     void* addr;
     sem_t* sem;
-    int address;
+    // int address;
 
    public:
     shared_array(const char* name, size_t size) : name_(std::string(name)), size_(size)
@@ -58,7 +58,6 @@ class shared_array
         munmap(addr, size_ * sizeof(int));
         close(shm_fd);
         sem_close(sem);
-        shm_unlink(name_.c_str());
     }
 
     int& operator[](int index)
@@ -67,10 +66,10 @@ class shared_array
         {
             throw std::out_of_range("Index out of range");
         }
-        lock();
-        address = array[index];
-        unlock();
-        return address;
+        // lock();
+        // address = array[index];
+        // unlock();
+        return array[index];
     }
 
     void lock() { sem_wait(sem); }
