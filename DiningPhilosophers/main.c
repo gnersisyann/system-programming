@@ -3,62 +3,79 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
-sem_t *chopsticks[5];
+sem_t chopsticks[5];
 pid_t philosophers[5];
-sem_t *cleanup_lock;
+sem_t *print_lock;
 volatile sig_atomic_t stop = 0;
 
 void handle_interrupt() { stop = 1; }
+void handle_terminate() { exit(0); }
+
+void safe_print(const char *msg, int action) {
+  sem_wait(print_lock);
+  if (action >= 0 && action <= 4)
+    printf("%s (%d)\n", msg, action);
+  else
+    printf("%s", msg);
+  sem_post(print_lock);
+}
 
 void philosopher(int id) {
-  srand(time(NULL));
+  signal(SIGTERM, handle_terminate);
+  srand(time(NULL) ^ id);
 
   int left = id;
   int right = (id + 1) % 5;
-  if (id % 2 == 0) {
+  if (left > right) {
     int temp = left;
     left = right;
     right = temp;
   }
 
   while (!stop) {
-    printf("Philosopher %d is thinking\n", id);
+    safe_print("Philosopher is thinking", id);
     sleep(rand() % 3 + 1);
 
-    if (sem_wait(chopsticks[left]) == 0) {
-      if (sem_wait(chopsticks[right]) == 0) {
-        printf("Philosopher %d is eating\n", id);
+    if (sem_wait(&chopsticks[left]) == 0) {
+      if (sem_wait(&chopsticks[right]) == 0) {
+        safe_print("Philosopher is eating", id);
         sleep(rand() % 3 + 1);
-        sem_post(chopsticks[right]);
+        sem_post(&chopsticks[right]);
       }
-      sem_post(chopsticks[left]);
+      sem_post(&chopsticks[left]);
     }
   }
   exit(0);
 }
 
+void cleanup() {
+  printf("Cleaning up...\n");
+  for (int i = 0; i < 5; ++i) {
+    sem_destroy(&chopsticks[i]);
+  }
+  sem_destroy(print_lock);
+  munmap(print_lock, sizeof(sem_t));
+  printf("Done.\n");
+}
+
 int main() {
   signal(SIGINT, handle_interrupt);
-  char sem_name[10];
-  cleanup_lock = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE,
-                      MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-  if (cleanup_lock == MAP_FAILED) {
-    perror("mmap");
-    exit(EXIT_FAILURE);
-  }
-  sem_init(cleanup_lock, 1, 1);
+  signal(SIGTERM, cleanup);
+  signal(SIGSEGV, cleanup);
+
+  print_lock = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE,
+                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  sem_init(print_lock, 1, 1);
 
   for (int i = 0; i < 5; ++i) {
-    snprintf(sem_name, sizeof(sem_name), "/sem%d", i);
-    chopsticks[i] = sem_open(sem_name, O_CREAT | O_EXCL, 0644, 1);
-    if (chopsticks[i] == SEM_FAILED) {
-      perror("Error opening semaphore");
+    if (sem_init(&chopsticks[i], 1, 1) == -1) {
+      perror("sem_init");
+      cleanup();
       exit(EXIT_FAILURE);
     }
   }
@@ -67,6 +84,11 @@ int main() {
     philosophers[i] = fork();
     if (philosophers[i] == -1) {
       perror("Error creating process");
+      for (int j = 0; j < i; ++j) {
+        kill(philosophers[j], SIGTERM);
+        waitpid(philosophers[j], NULL, 0);
+      }
+      cleanup();
       exit(EXIT_FAILURE);
     }
     if (philosophers[i] == 0) {
@@ -78,22 +100,11 @@ int main() {
     sleep(1);
   }
 
-  printf("\nTerminating philosophers...\n");
   for (int i = 0; i < 5; ++i) {
     kill(philosophers[i], SIGTERM);
     waitpid(philosophers[i], NULL, 0);
   }
 
-  printf("Cleaning up semaphores...\n");
-  for (int i = 0; i < 5; ++i) {
-    snprintf(sem_name, sizeof(sem_name), "/sem%d", i);
-    sem_close(chopsticks[i]);
-    sem_unlink(sem_name);
-  }
-
-  sem_destroy(cleanup_lock);
-  munmap(cleanup_lock, sizeof(sem_t));
-
-  printf("Done.\n");
+  cleanup();
   return 0;
 }
