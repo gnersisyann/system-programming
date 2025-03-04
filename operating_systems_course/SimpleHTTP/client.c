@@ -14,7 +14,7 @@ int main() {
 
   struct addrinfo hints, *res, *p;
   struct sockaddr_in server_address;
-  char ipstr[INET6_ADDRSTRLEN];
+  char ipstr[INET_ADDRSTRLEN];
   int client_socket;
 
   memset(&hints, 0, sizeof hints);
@@ -28,9 +28,9 @@ int main() {
 
   for (p = res; p != NULL; p = p->ai_next) {
     if (p->ai_family == AF_INET) {
-      struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-      inet_ntop(p->ai_family, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
-      server_address = *ipv4;
+      struct sockaddr_in *ip = (struct sockaddr_in *)p->ai_addr;
+      inet_ntop(p->ai_family, &(ip->sin_addr), ipstr, sizeof(ipstr));
+      server_address = *ip;
       break;
     }
   }

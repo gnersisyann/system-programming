@@ -30,7 +30,6 @@ void *receive_messages(void *socket_ptr) {
 int main() {
   struct sockaddr_in server_address;
   char username[USERNAME_LENGTH];
-  // Create socket
   int client_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (client_socket == -1) {
     perror("socket creation error");
@@ -73,6 +72,7 @@ int main() {
     close(client_socket);
     exit(errno);
   }
+  pthread_detach(recv_thread);
 
   char input[BUFSIZE];
   while (1) {
